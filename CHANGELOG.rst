@@ -1,6 +1,25 @@
 Version history
 ===============
 
+0.13.6 (2020-08-03)
+-----------------------
+* add and handle timeout for youtube-dl get-url and cookies file download
+* update requirements
+
+0.13.5 (2020-08-02)
+-----------------------
+* update requirements
+
+0.13.4 (2020-05-10)
+-----------------------
+* support tiktok video download/upload
+* update requirements
+
+0.13.3 (2020-04-18)
+-----------------------
+* many cosmetic refinements
+* update requirements
+
 0.13.2 (2020-03-25)
 -----------------------
 * use scdl fork with soundcloud api v2 support

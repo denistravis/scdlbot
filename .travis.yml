@@ -1,19 +1,23 @@
 os: linux
+dist: focal
 language: python
 
 python:
 - 3.6
 - 3.7
 - 3.8
+- 3.9
 
 env:
-  - POETRY_VERSION=1.1.0a1
+  - POETRY_VERSION=1.1.4
 
 install:
   - pip freeze | xargs pip uninstall -y
   - pip install --upgrade pip tox tox-travis
   - curl -sSL "https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py" | python
   - source "$HOME/.poetry/env"
+  - poetry config installer.parallel false
+  - poetry config experimental.new-installer false
 script: tox
 
 #after_success:
@@ -28,4 +32,5 @@ deploy:
     - poetry publish --build
   on:
     tags: true
-    python: 3.8
+    python: 3.9
+

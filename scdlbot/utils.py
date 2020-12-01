@@ -3,9 +3,16 @@ import os
 
 import pkg_resources
 import requests
-import youtube_dl
+
+try:
+    import youtube_dl
+    youtube_dl_bin_name = 'youtube-dl'
+except:
+    import youtube_dlc as youtube_dl
+    youtube_dl_bin_name = 'youtube-dlc'
+
 from boltons.urlutils import URL
-from plumbum import local, ProcessExecutionError
+from plumbum import local, ProcessExecutionError, ProcessTimedOut
 
 from scdlbot.exceptions import *
 
@@ -14,7 +21,7 @@ from scdlbot.exceptions import *
 bin_path = os.getenv('BIN_PATH', '')
 scdl_bin = local[os.path.join(bin_path, 'scdl')]
 bandcamp_dl_bin = local[os.path.join(bin_path, 'bandcamp-dl')]
-youtube_dl_bin = local[os.path.join(bin_path, 'youtube-dl')]
+youtube_dl_bin = local[os.path.join(bin_path, youtube_dl_bin_name)]
 
 BOTAN_TRACK_URL = 'https://api.botan.io/track'
 
@@ -34,9 +41,12 @@ def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_i
     # https://github.com/ytdl-org/youtube-dl#how-do-i-pass-cookies-to-youtube-dl
     if cookies_file:
         if "http" in cookies_file:
-            r = requests.get(cookies_file, allow_redirects=True)
-            open(cookies_download_file, 'wb').write(r.content)
-            youtube_dl_args.extend(["--cookies", cookies_download_file])
+            try:
+                r = requests.get(cookies_file, allow_redirects=True, timeout=5)
+                open(cookies_download_file, 'wb').write(r.content)
+                youtube_dl_args.extend(["--cookies", cookies_download_file])
+            except:
+                pass
         else:
             youtube_dl_args.extend(["--cookies", cookies_file])
 
@@ -48,7 +58,9 @@ def get_direct_urls(url, cookies_file=None, cookies_download_file=None, source_i
 
     youtube_dl_args.extend(["--get-url", url])
     try:
-        ret_code, std_out, std_err = youtube_dl_bin[youtube_dl_args].run()
+        ret_code, std_out, std_err = youtube_dl_bin[youtube_dl_args].run(timeout=10)
+    except ProcessTimedOut as exc:
+        raise URLTimeoutError
     except ProcessExecutionError as exc:
         # TODO: look at case: one page has multiple videos, some available, some not
         if "returning it as such" in exc.stderr:

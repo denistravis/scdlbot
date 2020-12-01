@@ -11,11 +11,11 @@ from datetime import datetime
 from multiprocessing import Process, Queue
 from queue import Empty
 from subprocess import PIPE, TimeoutExpired  # skipcq: BAN-B404
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 from uuid import uuid4
 
 import ffmpeg
-from boltons.urlutils import find_all_links, URL
+from boltons.urlutils import find_all_links
 from mutagen.id3 import ID3
 from mutagen.mp3 import EasyMP3 as MP3
 from prometheus_client import Summary
@@ -36,16 +36,11 @@ REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing requ
 
 class ScdlBot:
 
-    def __init__(self, tg_bot_token, proxies=None,
+    def __init__(self, tg_bot_token, tg_bot_api="https://api.telegram.org", proxies=None,
                  store_chat_id=None, no_flood_chat_ids=None, alert_chat_ids=None,
-                 dl_dir="/tmp/scdlbot", dl_timeout=300, max_convert_file_size=80_000_000,
+                 dl_dir="/tmp/scdlbot", dl_timeout=300, max_tg_file_size=45_000_000, max_convert_file_size=80_000_000,
                  chat_storage_file="/tmp/scdlbotdata", app_url=None,
                  serve_audio=False, cookies_file=None, source_ips=None):
-        self.SERVE_AUDIO = serve_audio
-        if self.SERVE_AUDIO:
-            self.MAX_TG_FILE_SIZE = 19_000_000
-        else:
-            self.MAX_TG_FILE_SIZE = 45_000_000
         self.SITES = {
             "sc": "soundcloud",
             "scapi": "api.soundcloud",
@@ -54,7 +49,12 @@ class ScdlBot:
         }
         self.APP_URL = app_url
         self.DL_TIMEOUT = dl_timeout
+        self.TG_BOT_API = tg_bot_api
+        self.MAX_TG_FILE_SIZE = max_tg_file_size
         self.MAX_CONVERT_FILE_SIZE = max_convert_file_size
+        self.SERVE_AUDIO = serve_audio
+        if self.SERVE_AUDIO:
+            self.MAX_TG_FILE_SIZE = 19_000_000
         self.HELP_TEXT = get_response_text('help.tg.md')
         self.SETTINGS_TEXT = get_response_text('settings.tg.md')
         self.DL_TIMEOUT_TEXT = get_response_text('dl_timeout.txt').format(self.DL_TIMEOUT // 60)
@@ -90,7 +90,7 @@ class ScdlBot:
         #     with open(config_path, 'w') as config_file:
         #         config.write(config_file)
 
-        self.updater = Updater(token=tg_bot_token, use_context=True)
+        self.updater = Updater(token=tg_bot_token, base_url=f"{self.TG_BOT_API}/bot", use_context=True, base_file_url=f"{self.TG_BOT_API}/file/bot")
         dispatcher = self.updater.dispatcher
 
         start_command_handler = CommandHandler('start', self.help_command_callback)
@@ -456,15 +456,21 @@ class ScdlBot:
         else:
             urls = find_all_links(msg_or_text, default_scheme="http")
         urls_dict = {}
-        for url in urls:
+        for url_item in urls:
+            url = url_item
+            try:
+                # unshorten soundcloud.app.goo.gl (and other?) links:
+                url = URL(requests.head(url_item, allow_redirects=True).url)
+            except:
+                pass
             url_text = url.to_text(True)
             #FIXME crutch:
             url_text = url_text.replace("m.soundcloud.com", "soundcloud.com")
             url_parts_num = len([part for part in url.path_parts if part])
             try:
                 if (
-                    # SoundCloud: tracks, sets and widget pages, no /you/ pages
-                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 3 or self.SITES["scapi"] in url_text) and (
+                    # SoundCloud: tracks, sets and widget pages, no /you/ pages #TODO private sets are 5
+                    (self.SITES["sc"] in url.host and (2 <= url_parts_num <= 4 or self.SITES["scapi"] in url_text) and (
                         not "you" in url.path_parts)) or
                     # Bandcamp: tracks and albums
                     (self.SITES["bc"] in url.host and (2 <= url_parts_num <= 2)) or
@@ -502,6 +508,8 @@ class ScdlBot:
             status = -4
         elif direct_urls == "live":
             status = -5
+        elif direct_urls == "timeout":
+            status = -6
         else:
             if (self.SITES["sc"] in url and self.SITES["scapi"] not in url) or (self.SITES["bc"] in url):
                 cmd_name = "scdl"
@@ -509,7 +517,8 @@ class ScdlBot:
                 cmd = None
                 cmd_input = None
                 if self.SITES["sc"] in url and self.SITES["scapi"] not in url:
-                    cmd_name = "scdl"
+                    cmd = scdl_bin
+                    cmd_name = str(cmd)
                     cmd_args = (
                         "-l", url,  # URL of track/playlist/user
                         "-c",  # Continue if a music already exist
@@ -522,10 +531,10 @@ class ScdlBot:
                         # Download playlist tracks into directory, instead of making a playlist subfolder
                         "--extract-artist",  # Set artist tag from title instead of username
                     )
-                    cmd = scdl_bin
                     cmd_input = None
                 elif self.SITES["bc"] in url:
-                    cmd_name = "bandcamp-dl"
+                    cmd = bandcamp_dl_bin
+                    cmd_name = str(cmd)
                     cmd_args = (
                         "--base-dir", download_dir,  # Base location of which all files are downloaded
                         "--template", "%{track} - %{artist} - %{title} [%{album}]",  # Output filename template
@@ -535,7 +544,6 @@ class ScdlBot:
                         "--no-slugify",  # Disable slugification of track, album, and artist names
                         url,  # URL of album/track
                     )
-                    cmd = bandcamp_dl_bin
                     cmd_input = "yes"
 
                 logger.info("%s starts: %s", cmd_name, url)
@@ -557,8 +565,8 @@ class ScdlBot:
                     logger.exception("%s failed: %s", cmd_name, url)
 
         if status == 0:
-            cmd_name = "youtube-dl"
             cmd = youtube_dl_func
+            cmd_name = "youtube_dl_func"
             # TODO: set different ydl_opts for different sites
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -573,6 +581,10 @@ class ScdlBot:
                     # {'key': 'EmbedThumbnail',}, {'key': 'FFmpegMetadata',},
                 ],
             }
+            host = urlparse(url).hostname
+            if host == "tiktok.com" or host.endswith(".tiktok.com"):
+                ydl_opts['postprocessors'] = []
+                ydl_opts['outtmpl'] = os.path.join(download_dir, 'tiktok.%(ext)s')
             if proxy:
                 ydl_opts['proxy'] = proxy
             if source_ip:
@@ -608,7 +620,7 @@ class ScdlBot:
                 status = -2
             gc.collect()
 
-        if status == -1:
+        if status in [-1, -6]:
             bot.send_message(chat_id=chat_id, reply_to_message_id=reply_to_message_id,
                              text=self.DL_TIMEOUT_TEXT, parse_mode='Markdown')
         elif status == -2:
@@ -713,11 +725,13 @@ class ScdlBot:
         file_root, file_ext = os.path.splitext(file)
         file_format = file_ext.replace(".", "").lower()
         file_size = os.path.getsize(file)
-        if file_format not in ["mp3", "m4a", "mp4"]:
+        # FIXME unknown_video is for tiktok
+        if file_format not in ["mp3", "m4a", "mp4", "unknown_video"]:
             raise FileNotSupportedError(file_format)
         if file_size > self.MAX_CONVERT_FILE_SIZE:
             raise FileTooLargeError(file_size)
-        if file_format != "mp3":
+        # FIXME unknown_video is for tiktok and also tiktok.mp4
+        if file_format not in ["mp3", "unknown_video"] and "tiktok." not in file:
             logger.info("Converting: %s", file)
             try:
                 file_converted = file.replace(file_ext, ".mp3")
@@ -794,34 +808,50 @@ class ScdlBot:
             # caption_full = textwrap.shorten(caption_full, width=190, placeholder="..")
             for i in range(3):
                 try:
-                    mp3 = MP3(file_part)
-                    duration = round(mp3.info.length)
-                    performer = None
-                    title = None
-                    try:
-                        performer = ", ".join(mp3['artist'])
-                        title = ", ".join(mp3['title'])
-                    except:
-                        pass
-                    if self.SERVE_AUDIO:
-                        audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
-                        logger.debug(audio)
-                    else:
-                        audio = open(file_part, 'rb')
-                    if i > 0:
-                        # maybe: Reply message not found
-                        reply_to_message_id = None
-                    audio_msg = bot.send_audio(chat_id=chat_id,
-                                               reply_to_message_id=reply_to_message_id,
-                                               audio=audio,
-                                               duration=duration,
-                                               performer=performer,
-                                               title=title,
-                                               caption=caption_full,
-                                               parse_mode='Markdown')
-                    sent_audio_ids.append(audio_msg.audio.file_id)
-                    logger.info("Sending succeeded: %s", file_name)
-                    break
+                    if file_part.endswith('.mp3'):
+                        mp3 = MP3(file_part)
+                        duration = round(mp3.info.length)
+                        performer = None
+                        title = None
+                        try:
+                            performer = ", ".join(mp3['artist'])
+                            title = ", ".join(mp3['title'])
+                        except:
+                            pass
+                        if "127.0.0.1" in self.TG_BOT_API:
+                            audio = path.absolute().as_uri()
+                            logger.debug(audio)
+                        elif self.SERVE_AUDIO:
+                            audio = str(urljoin(self.APP_URL, str(path.relative_to(self.DL_DIR))))
+                            logger.debug(audio)
+                        else:
+                            audio = open(file_part, 'rb')
+                        if i > 0:
+                            # maybe: Reply message not found
+                            reply_to_message_id = None
+                        audio_msg = bot.send_audio(chat_id=chat_id,
+                                                   reply_to_message_id=reply_to_message_id,
+                                                   audio=audio,
+                                                   duration=duration,
+                                                   performer=performer,
+                                                   title=title,
+                                                   caption=caption_full,
+                                                   parse_mode='Markdown')
+                        sent_audio_ids.append(audio_msg.audio.file_id)
+                        logger.info("Sending succeeded: %s", file_name)
+                        break
+                    # FIXME unknown_video is for tiktok
+                    elif file_part.endswith('.unknown_video') or "tiktok." in file_part:
+                        video = open(file_part, 'rb')
+                        video_msg = bot.send_video(chat_id=chat_id,
+                                                   reply_to_message_id=reply_to_message_id,
+                                                   video=video,
+                                                   # duration=duration,
+                                                   caption=caption_full,
+                                                   parse_mode='Markdown')
+                        sent_audio_ids.append(video_msg.video.file_id)
+                        logger.info("Sending succeeded: %s", file_name)
+                        break
                 except TelegramError:
                     if i == 2:
                         logger.exception("Sending failed because of TelegramError: %s", file_name)

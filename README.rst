@@ -2,21 +2,13 @@ Music Downloader Telegram Bot aka scdlbot
 =========================================
 
 
-.. image:: https://img.shields.io/badge/Telegram-@scdlbot-blue.svg
+.. image:: https://img.shields.io/badge/telegram-@scdlbot-blue.svg
         :target: https://t.me/scdlbot
         :alt: Telegram Bot
 
-.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
-        :target: https://travis-ci.com/gpchelkin/scdlbot
-        :alt: Travis CI Build Status
-
-.. image:: https://github.com/gpchelkin/scdlbot/workflows/Python%20package/badge.svg
-        :target: https://github.com/gpchelkin/scdlbot/actions
-        :alt: GitHub Actions Status
-
 .. image:: https://img.shields.io/github/license/gpchelkin/scdlbot.svg
-        :target: https://raw.githubusercontent.com/gpchelkin/scdlbot/master/LICENSE
-        :alt: GitHub License
+        :target: https://github.com/gpchelkin/scdlbot/blob/master/LICENSE
+        :alt: MIT License
 
 .. image:: https://readthedocs.org/projects/scdlbot/badge/?version=latest
         :target: https://scdlbot.readthedocs.io/
@@ -25,6 +17,26 @@ Music Downloader Telegram Bot aka scdlbot
 .. image:: https://img.shields.io/pypi/v/scdlbot.svg
         :target: https://pypi.org/project/scdlbot
         :alt: PyPI Version
+
+.. image:: https://travis-ci.com/gpchelkin/scdlbot.svg?branch=master
+        :target: https://travis-ci.com/gpchelkin/scdlbot
+        :alt: Travis CI Build Status
+
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/build/badge.svg?branch=master&event=push
+        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3Abuild
+        :alt: GitHub Actions Build Status
+
+.. image:: https://github.com/gpchelkin/scdlbot/workflows/CodeQL/badge.svg?branch=master&event=push
+        :target: https://github.com/gpchelkin/scdlbot/actions?query=workflow%3ACodeQL
+        :alt: GitHub Actions CodeQL Status
+
+.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=active+issues&show_trend=true
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
+        :alt: DeepSource Active Issues
+
+.. image:: https://deepsource.io/gh/gpchelkin/scdlbot.svg/?label=resolved+issues&show_trend=true
+        :target: https://deepsource.io/gh/gpchelkin/scdlbot/?ref=repository-badge
+        :alt: DeepSource Resolved Issues
 
 .. image:: https://codeclimate.com/github/gpchelkin/scdlbot/badges/issue_count.svg
         :target: https://codeclimate.com/github/gpchelkin/scdlbot
@@ -45,10 +57,6 @@ Music Downloader Telegram Bot aka scdlbot
 .. image:: https://www.codefactor.io/repository/github/gpchelkin/scdlbot/badge
         :target: https://www.codefactor.io/repository/github/gpchelkin/scdlbot
         :alt: CodeFactor
-
-.. image:: https://static.deepsource.io/deepsource-badge-light-mini.svg
-        :target: https://deepsource.io/gh/gpchelkin/scdlbot/
-        :alt: DeepSource
 
 Telegram Bot for downloading MP3 rips of tracks/sets from
 SoundCloud, Bandcamp, YouTube with tags and artwork.
@@ -73,6 +81,8 @@ to `issues <https://github.com/gpchelkin/scdlbot/issues>`__.
 Supported sites and mainly used packages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+scdlbot is standing on the shoulders of giants:
+
 -  `Telegram Bot API <https://core.telegram.org/bots/api>`__:
    `python-telegram-bot <https://github.com/python-telegram-bot/python-telegram-bot>`__
 -  `SoundCloud <https://soundcloud.com>`__:
@@ -80,8 +90,8 @@ Supported sites and mainly used packages
 -  `Bandcamp <https://bandcamp.com>`__:
    `bandcamp-dl <https://github.com/iheanyi/bandcamp-dl>`__
 -  `YouTube <https://www.youtube.com/>`__, `Yandex.Music <https://music.yandex.com/>`__,
-   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://ytdl-org.github.io/youtube-dl/supportedsites.html>`__:
-   `youtube-dl <https://ytdl-org.github.io/youtube-dl>`__
+   `Mixcloud <https://www.mixcloud.com/>`__, and almost everything from this `list <https://yt-dl.org/supportedsites.html>`__:
+   `youtube-dl <https://yt-dl.org>`__
 
 Run your own scdlbot
 --------------------
