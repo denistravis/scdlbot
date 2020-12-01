@@ -16,13 +16,12 @@ _Send or forward_ a text message containing links and I will:
 *Mixcloud, Vimeo and* [almost everything from this list](https://ytdl-org.github.io/youtube-dl/supportedsites.html), but no VK music
 
 *Example message:*
-`Hey, check this out! https://m.soundcloud.com/falling-ethics/jk-flesh-static-demon-fexelvn004 and also https://shitmat.bandcamp.com/track/amen-babylon-2016-mix and youtu.be/Mdzy5RKn434`
+`Hey, check this out! https://m.soundcloud.com/dabilliondollarbaby/rockstar-feat-roddy-ricch and also https://m.soundcloud.com/scumgang6ix9ine/gooba-6ix9ine and youtu.be/Mdzy5RKn434`
 
-👨🏻‍💻 *Developed by @gpchelkin*:
-[🐝 Channel](https://t.me/ggpchelkin) | [🐝 Homepage](https://pchelk.in)
-[🌟 Star me on GitHub!](https://github.com/gpchelkin/scdlbot) | [⚠️ Report an issue](https://github.com/gpchelkin/scdlbot/issues)
+👨🏻‍💻 *For queries and feedback 📲@gamersfeedback_bot*:
+[📲 Channel](https://t.me/joinchat/AAAAAFeyvCxJDShNFQb6LQ) | 
+[🌟 Star me on GitHub!](https://github.com/denistravis) | [⚠️ Report an issue](https://github.com/gpchelkin/scdlbot/issues)
 💵 Support development:
-[PayPal](http://paypal.me/ggpchelkin/200) | [Ko-fi](https://ko-fi.com/gpchelkin) | [Tinkoff](https://www.tinkoff.ru/sl/Acd7Jamf4YM) | [Yandex.Money](http://money.yandex.ru/to/41001421333857/200)
+[PayPal](https://paypal.me/denistravis?locale.x=en_US) support to keep bot running
 
-👩🏻‍🎨 Logo by `@lowonbudget` | [🖼️ Behance](https://www.behance.net/lowonbudget)
-🎶 Inspired by `@electrocircle` | [⚡⚫ Channel](https://t.me/Eklight)
+[🙂Bot is free so join my 📲 Channel](https://t.me/joinchat/AAAAAFeyvCxJDShNFQb6LQ)
